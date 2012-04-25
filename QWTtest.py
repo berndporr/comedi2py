@@ -6,13 +6,13 @@ from PyQt4.Qwt5.anynumpy import *
 
 class SimplePlot(Qwt.QwtPlot):
 
+    
+
     def __init__(self, *args):
         Qwt.QwtPlot.__init__(self, *args)
 
-        # make a QwtPlot widget
-        self.setTitle('ReallySimpleDemo.py')
-        self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.RightLegend)
-        
+        global x,y,cSin;
+
         # set axis titles
         self.setAxisTitle(Qwt.QwtPlot.xBottom, 'x -->')
         self.setAxisTitle(Qwt.QwtPlot.yLeft, 'y -->')
@@ -22,16 +22,12 @@ class SimplePlot(Qwt.QwtPlot):
         cSin.setPen(Qt.QPen(Qt.Qt.red))
         cSin.attach(self)
 
-        cCos = Qwt.QwtPlotCurve('y = cos(x)')
-        cCos.setPen(Qt.QPen(Qt.Qt.blue))
-        cCos.attach(self)
-        
         # make a Numeric array for the horizontal data
-        x = arange(0.0, 10.0, 0.1)
+        x = arange(0.0, 500, 1)
+        y = sin(x*0.1)
 
         # initialize the data
-        cSin.setData(x, sin(x))
-        cCos.setData(x, cos(x))
+        cSin.setData(x,y)
 
         # insert a horizontal marker at y = 0
         mY = Qwt.QwtPlotMarker()
@@ -54,6 +50,13 @@ class SimplePlot(Qwt.QwtPlot):
 
     # __init__()
 
+    def new_data(self,d):
+        global y,x,cSin;
+# shift the data
+        y = [d] + y[0:-1]
+        cSin.setData(x,y)
+        self.replot()
+
 # class Plot
 
 
@@ -74,9 +77,9 @@ def comedistart(a):
     print a
 
 def comedidata(a):
-    global b
-    b = b + a[0]
-    print b
+    global demo
+    ch1 = a[0];
+    demo.new_data(ch1);
 
 def comedistop():
     print a
