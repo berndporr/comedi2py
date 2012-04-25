@@ -1,0 +1,33 @@
+.TH COMEDI2PY "1" "April 2012" "comedi2py 1.2.2" "User Commands"
+.SH NAME
+comedi2py \- feeding continous acquisition data into python
+.SH SYNOPSIS
+.B comedi2py
+[\fIOPTION\fR]... MODULE
+.SH DESCRIPTION
+A simple application which switches on the COMEDI DAQ card
+and feeds all samples at a given sampling rate into the
+python MODULE and then calls the function comedidata(a). 
+At start of the program comedistart(a) is called with the
+sampling rate. comedistop() is called when the app is closed.
+.TP
+\-c CHANNELS
+sets the number of channels
+.TP
+\-n FREQUENCY
+sets the notch filter frequency
+.TP
+\-d DEVICES
+sets the maximum number of comedi devices (default is the all
+connected COMEDI devices are used)
+.TP
+\-r SAMPLINGRATE
+sets the sampling rate
+.SH "SEE ALSO"
+More documentation can be found on
+http://www.linux-usb-daq.co.uk/software2/comedi-record/
+in particular examples describing how to import data into octave, gnuplot
+or MATLAB.
+.SH AUTHOR
+comedi2py was written by Bernd Porr <berndporr@f2s.com>.
+
