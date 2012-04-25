@@ -67,9 +67,8 @@ def make():
 
 
 def comedistart(a):
-    app = Qt.QApplication(['Bla'])
+    global demo
     demo = make()
-    app.exec_()
     global b
     b = 0
     print a
