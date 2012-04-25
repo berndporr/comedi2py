@@ -3,19 +3,19 @@ from PyQt4 import Qt
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *
 
+# this is taken from the QWT demos and slightly modified
+# to get this scrolling plot
 
 class SimplePlot(Qwt.QwtPlot):
-
-    
 
     def __init__(self, *args):
         Qwt.QwtPlot.__init__(self, *args)
 
-        global x,y,cSin;
+        global x,y,cSin,samplingrate;
 
         # set axis titles
-        self.setAxisTitle(Qwt.QwtPlot.xBottom, 'x -->')
-        self.setAxisTitle(Qwt.QwtPlot.yLeft, 'y -->')
+        self.setAxisTitle(Qwt.QwtPlot.xBottom, 't/sec -->')
+        self.setAxisTitle(Qwt.QwtPlot.yLeft, 'u/Volt -->')
 
         # insert a few curves
         cSin = Qwt.QwtPlotCurve('y = sin(x)')
@@ -24,7 +24,9 @@ class SimplePlot(Qwt.QwtPlot):
 
         # make a Numeric array for the horizontal data
         x = arange(0.0, 500, 1)
-        y = sin(x*0.1)
+        x = x / samplingrate;
+        # some nice random data to begin with
+        y = sin(x*1000)
 
         # initialize the data
         cSin.setData(x,y)
@@ -37,14 +39,6 @@ class SimplePlot(Qwt.QwtPlot):
         mY.setYValue(0.0)
         mY.attach(self)
 
-        # insert a vertical marker at x = 2 pi
-        mX = Qwt.QwtPlotMarker()
-        mX.setLabel(Qwt.QwtText('x = 2 pi'))
-        mX.setLabelAlignment(Qt.Qt.AlignRight | Qt.Qt.AlignTop)
-        mX.setLineStyle(Qwt.QwtPlotMarker.VLine)
-        mX.setXValue(2*pi)
-        mX.attach(self)
-
         # replot
         self.replot()
 
@@ -52,8 +46,9 @@ class SimplePlot(Qwt.QwtPlot):
 
     def new_data(self,d):
         global y,x,cSin;
-# shift the data
-        y = [d] + y[0:-1]
+# shift the dat
+        ym = y[0:-1]
+        y = concatenate( ([d], ym ) )
         cSin.setData(x,y)
         self.replot()
 
@@ -66,13 +61,19 @@ def make():
     demo.show()
     return demo
 
-# make()
 
 
+#########################################################
+# functions called by comedi2py
+
+# called once with the samplingrate in Hz
 def comedistart(a):
     global demo
+    global samplingrate
+    samplingrate = a
     demo = make()
 
+# called every sample
 def comedidata(a):
     global demo
     demo.new_data(a[0]);
