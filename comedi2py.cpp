@@ -16,6 +16,7 @@
 #include <QFileDialog>
 #include <QSizePolicy>
 #include <QTextEdit>
+#include <QMainWindow>
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -310,7 +311,7 @@ int main( int argc, char **argv )
 	int num_of_channels = 16;
 	int num_of_devices = 1;
 	const char *filename = NULL;
-	int sampling_rate = 1000;
+	int sampling_rate = 100;
 
 	QApplication a( argc, argv );		// create application object
 

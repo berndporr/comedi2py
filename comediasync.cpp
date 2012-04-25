@@ -26,7 +26,7 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 	)
     : QTextEdit( comedi2pyTmp ) {
 
-	setAttribute(Qt::WA_NoBackground);
+	setReadOnly ( true );
 
 	channels_in_use = channels;
 
@@ -63,6 +63,9 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 		exit(1);
 	}
 
+	insertPlainText ( QString().sprintf("%d comedi devices\n",
+					  nComediDevices) );
+
 	chanlist = new unsigned int*[nComediDevices];
 	cmd = new comedi_cmd*[nComediDevices];
 	subdevice = comedi_find_subdevice_by_type(dev[0],COMEDI_SUBD_AI,0);
@@ -70,6 +73,9 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 	if (channels_in_use == 0) {
 		channels_in_use = comedi_get_n_channels(dev[0],subdevice);
 	}
+
+	insertPlainText ( QString().sprintf("%d channels are used.\n",
+					    channels_in_use) );
 
 	for(int devNo=0;devNo<nComediDevices;devNo++) {
 		chanlist[devNo] = new unsigned int[channels_in_use];
@@ -101,6 +107,8 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 			comedi_perror("comedi_command_test");
 			exit(-1);
 		}
+		insertPlainText ( QString().sprintf("1st command test successful!\n"));
+
 		ret = comedi_command_test(dev[devNo],cmd[devNo]);
 		if(ret<0){
 			comedi_perror("comedi_command_test");
@@ -110,6 +118,7 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 			fprintf(stderr,"Error preparing command\n");
 			exit(-1);
 		}
+		insertPlainText ( QString().sprintf("2nd command test successful!\n"));
 	}
 
 	// the timing is done channel by channel
@@ -126,9 +135,18 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 
 	maxdata = new lsampl_t[nComediDevices];
 	crange = new comedi_range*[nComediDevices];
+
 	for(int devNo=0;devNo<nComediDevices;devNo++) {
 		maxdata[devNo]=comedi_get_maxdata(dev[devNo],subdevice,0);
 		crange[devNo]=comedi_get_range(dev[devNo],subdevice,0,0);
+		insertPlainText ( QString().sprintf("comedi%d has a raw "
+						    "data range [0:%x] "
+						    "which maps to [%fV:%fV]\n",
+						    devNo,
+						    maxdata[devNo],
+						    crange[devNo]->min,
+						    crange[devNo]->max) );
+
 	}
 
         adAvgBuffer = new float*[nComediDevices];
@@ -151,6 +169,7 @@ void ComediAsync::startDAQ() {
 			exit(1);
 		}
 	}
+	insertPlainText ( QString().sprintf("Async acquisition is running.\n"));
 	startTimer( 50 );		// run continuous timer
 }
 

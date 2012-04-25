@@ -72,14 +72,11 @@ def make():
 def comedistart(a):
     global demo
     demo = make()
-    global b
-    b = 0
-    print a
 
 def comedidata(a):
     global demo
-    ch1 = a[0];
-    demo.new_data(ch1);
+    demo.new_data(a[0]);
 
+# not used so far
 def comedistop():
-    print a
+    print 0
