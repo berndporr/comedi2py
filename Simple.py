@@ -1,13 +1,15 @@
-def comedistart(a):
-    global b
-    b = 0
-    print "Sampling rate is:"
-    print a
+def comedistart(a,b,c):
+    global accumulator
+    accumulator = 0
+    print "Sampling rate is:",a
+    print "Minimum value:",b
+    print "Maximum value:",c
 
 def comedidata(a):
-    global b
-    b = b + a[0]
-    print b,a
+    global accumulator
+    accumulator = accumulator + a[0]
+    print accumulator,a
 
 def comedistop():
-    print a
+    print "That's it"
+

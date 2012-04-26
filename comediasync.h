@@ -113,6 +113,16 @@ private:
      **/
     comedi_range** crange;
 
+public:
+    float getMinRange(int nDev) {
+	    return crange[nDev]->min;
+    }
+
+public:
+    float getMaxRange(int nDev) {
+	    return crange[nDev]->max;
+    }
+
 /**
  * Number of detected comedi devices
  **/

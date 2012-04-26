@@ -170,35 +170,49 @@ void Comedi2py::initPython() {
 
 	pStartFunc = PyObject_GetAttrString(pModule,PY_START_FUNCTION_NAME);
 	if (!pStartFunc) {
-		fprintf(stderr,"function "PY_START_FUNCTION_NAME" not defined\n");
+		fprintf(stderr,
+			"function "PY_START_FUNCTION_NAME" not defined\n");
 		exit(1);
 	}
 	if (!PyCallable_Check(pStartFunc)) {
-		fprintf(stderr,"function "PY_START_FUNCTION_NAME" not callable\n");
+		fprintf(stderr,
+			"function "PY_START_FUNCTION_NAME" not callable\n");
 	}
 
 	pDataFunc = PyObject_GetAttrString(pModule,PY_DATA_FUNCTION_NAME);
 	if (!pDataFunc) {
-		fprintf(stderr,"function "PY_DATA_FUNCTION_NAME" not defined\n");
+		fprintf(stderr,
+			"function "PY_DATA_FUNCTION_NAME" not defined\n");
 		exit(1);
 	}
 	if (!PyCallable_Check(pDataFunc)) {
-		fprintf(stderr,"function "PY_DATA_FUNCTION_NAME" not callable\n");
+		fprintf(stderr,
+			"function "PY_DATA_FUNCTION_NAME" not callable\n");
+		exit(1);
 	}
 
 	pStopFunc = PyObject_GetAttrString(pModule,PY_STOP_FUNCTION_NAME);
 	if (!pStopFunc) {
-		fprintf(stderr,"function "PY_STOP_FUNCTION_NAME" not defined\n");
+		fprintf(stderr,
+			"function "PY_STOP_FUNCTION_NAME" not defined\n");
 		exit(1);
 	}
 	if (!PyCallable_Check(pStopFunc)) {
-		fprintf(stderr,"function "PY_STOP_FUNCTION_NAME" not callable\n");
+		fprintf(stderr,
+			"function "PY_STOP_FUNCTION_NAME" not callable\n");
 	}
 
-	float r = comediAsync-> getCallbackSamplingRate();
+	// sampling rate, min, max
+	pStartArgs = PyTuple_New(3);
+	double r = (double)(comediAsync-> getCallbackSamplingRate());
 	pValueSamplingrate = PyFloat_FromDouble(r);
-	pStartArgs = PyTuple_New(1);
+	double minRange = (double)(comediAsync-> getMinRange(0));
+	pValueMinRange = PyFloat_FromDouble(minRange);
+	double maxRange = (double)(comediAsync-> getMaxRange(0));
+	pValueMaxRange = PyFloat_FromDouble(maxRange);
 	PyTuple_SetItem(pStartArgs, 0, pValueSamplingrate);
+	PyTuple_SetItem(pStartArgs, 1, pValueMinRange);
+	PyTuple_SetItem(pStartArgs, 2, pValueMaxRange);
 	PyObject_CallObject(pStartFunc, pStartArgs);
 	PyErr_Print();
 
@@ -209,7 +223,7 @@ void Comedi2py::initPython() {
 	for (int d = 0; d < ndev; d++) {
 		pList[d] = PyList_New(n);
 		for (int i = 0; i < n; ++i) {
-			pValue = PyFloat_FromDouble(0);
+			pValue = PyFloat_FromDouble((double)0.0);
 			if (!pValue) {
 				Py_DECREF(pArgs);
 				Py_DECREF(pModule);
@@ -230,11 +244,14 @@ void Comedi2py::runPython(float **buffer) {
 		for (int d = 0; d < ndev; d++) {
 			pList[d] = PyList_New(n);
 			for (int i = 0; i < n; ++i) {
-				pValue = PyFloat_FromDouble(buffer[d][i]);
+				pValue = PyFloat_FromDouble(
+					(double)(buffer[d][i])
+					);
 				if (!pValue) {
 					Py_DECREF(pArgs);
 					Py_DECREF(pModule);
-					fprintf(stderr, "Cannot convert argument\n");
+					fprintf(stderr,
+						"Cannot convert argument\n");
 					exit(1);
 				}
 				PyList_SetItem(pList[d], i, pValue);

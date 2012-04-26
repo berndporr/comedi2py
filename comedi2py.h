@@ -94,6 +94,8 @@ private:
 	 PyObject **pList;
 	 PyObject *pArgs,*pStartArgs,*pStopArgs;
 	 PyObject *pValueSamplingrate;
+	 PyObject *pValueMinRange;
+	 PyObject *pValueMaxRange;
 
 public:
 	 void initPython();

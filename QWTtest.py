@@ -15,10 +15,9 @@ class DAQThermo(Qt.QWidget):
 
         self.thermo = Qwt.QwtThermo(self)
         self.thermo.setOrientation(Qt.Qt.Vertical,Qwt.QwtThermo.LeftScale)
-        self.thermo.setRange(0.0, 1.0)
         self.thermo.setFillColor(Qt.Qt.green)
 
-        label = Qt.QLabel("Temperature", self)
+        label = Qt.QLabel("Volt", self)
         label.setAlignment(Qt.Qt.AlignCenter)
 
         layout = Qt.QVBoxLayout(self)
@@ -35,9 +34,8 @@ class DAQThermo(Qt.QWidget):
 
     # setValue()
 
-
-
-
+    def setRange(self,mi,ma):
+        self.thermo.setRange(mi,ma)
 
 
 class SimplePlot(Qwt.QwtPlot):
@@ -104,13 +102,14 @@ def makeThermo():
 # functions called by comedi2py
 
 # called once with the samplingrate in Hz
-def comedistart(a):
+def comedistart(a,minValue,maxValue):
     global demo
     global thermo
     global samplingrate
     samplingrate = a
     demo = makePlot()
     thermo = makeThermo()
+    thermo.setRange(minValue,maxValue)
 
 # called every sample
 def comedidata(a):
