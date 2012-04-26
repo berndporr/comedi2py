@@ -1,0 +1,18 @@
+Source: comedi2py
+Section: math
+Priority: extra
+Maintainer: Bernd Porr <berndporr@f2s.com>
+Build-Depends: debhelper (>= 8.0.0), libqt4-dev, qt4-qmake, libqwt5-qt4-dev, g++ (>= 4.4.3), libcomedi-dev, python-dev
+Standards-Version: 3.9.3
+Homepage: http://www.linux-usb-daq.co.uk/software2/comedi2py/
+
+Package: comedi2py
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-qwt5-qt4, python-qt4, libqt4-gui, libqwt5-qt4, libcomedi0, python-comedilib, python-numpy, python2.7
+Description: Realtime data plotting with python for COMEDI devices.
+ comedi2py feeds data at a specified sampling rate from 
+ your COMEDI data acquisition board into python by using call-back 
+ functions. The goal was to make this as easy as possible -- hiding 
+ all the complexity of COMEDI's asynchronous acquisition in 
+ comedi2py and providing the Python program simply with an array of 
+ the sampled data at the given sampling rate.

@@ -1,0 +1,5 @@
+comedi2py (0.5-1precise) precise; urgency=low
+
+  * Initial Release for precise pangolin
+
+ -- Bernd Porr <berndporr@f2s.com>  Thu, 26 Apr 2012 19:17:04 +0100
