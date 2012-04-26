@@ -63,8 +63,8 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 		exit(1);
 	}
 
-	insertPlainText ( QString().sprintf("%d comedi devices\n",
-					  nComediDevices) );
+	insertPlainText ( QString().sprintf("Number of comedi devices: %d\n",
+					    nComediDevices) );
 
 	chanlist = new unsigned int*[nComediDevices];
 	cmd = new comedi_cmd*[nComediDevices];
@@ -74,9 +74,13 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 		channels_in_use = comedi_get_n_channels(dev[0],subdevice);
 	}
 
-	insertPlainText ( QString().sprintf("%d channels are used.\n",
+	insertPlainText ( QString().sprintf("%d channels are being used.\n",
 					    channels_in_use) );
 
+	insertPlainText ( QString().sprintf("Requesting DAQ sampling "
+					    "rate: %d Hz\n",
+					    req_sampling_rate ));
+	
 	for(int devNo=0;devNo<nComediDevices;devNo++) {
 		chanlist[devNo] = new unsigned int[channels_in_use];
 		for(int i=0;i<channels_in_use;i++){
@@ -107,7 +111,8 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 			comedi_perror("comedi_command_test");
 			exit(-1);
 		}
-		insertPlainText ( QString().sprintf("1st command test successful!\n"));
+		insertPlainText ( QString().sprintf(
+					  "1st command test successful!\n"));
 
 		ret = comedi_command_test(dev[devNo],cmd[devNo]);
 		if(ret<0){
@@ -118,7 +123,8 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 			fprintf(stderr,"Error preparing command\n");
 			exit(-1);
 		}
-		insertPlainText ( QString().sprintf("2nd command test successful!\n"));
+		insertPlainText ( QString().sprintf(
+					  "2nd command test successful!\n"));
 	}
 
 	// the timing is done channel by channel
@@ -130,6 +136,10 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 	if ((cmd[0]->scan_begin_src ==  TRIG_TIMER)&&(cmd[0]->scan_begin_arg)) {
 		sampling_rate=1E9 / cmd[0]->scan_begin_arg;
 	}
+
+	insertPlainText ( QString().sprintf("Got DAQ sampling rate: %d Hz\n",
+					    req_sampling_rate ));
+
 
 	nsamples=0;
 
@@ -157,6 +167,23 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
                 }
         }
 
+}
+
+
+void ComediAsync::setDecimation(int d) {
+        tb_init=d;
+        tb_counter=tb_init;
+        for(int n=0;n<nComediDevices;n++) {
+                for(int i=0;i<channels_in_use;i++) {
+                        adAvgBuffer[n][i]=0;
+                }
+        }
+	insertPlainText ( QString().sprintf("Decimation factor is %d\n",
+					    d ));
+	
+	insertPlainText ( QString().sprintf("Python is called at "
+					    "a sampling rate of %f Hz\n",
+					    getCallbackSamplingRate()));
 }
 
 
@@ -250,16 +277,6 @@ void ComediAsync::checkForData() {
 		}
 	}
 }
-
-
-void ComediAsync::setTB(int us) {
-	tb_init=us/(1000000/sampling_rate);
-	tb_counter=tb_init;
-	for(int n=0;n<nComediDevices;n++) {
-		for(int i=0;i<channels_in_use;i++) {
-			adAvgBuffer[n][i]=0;
-		}
-	}}
 
 //
 // Handles timer events for the Comediasync widget.

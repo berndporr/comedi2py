@@ -1,7 +1,7 @@
 /********************************************************************
  * comedi2py.cpp 
  * License: GNU, GPL
- * (c) 2004-2011, Bernd Porr
+ * (c) 2004-2012, Bernd Porr
  * No Warranty
  ********************************************************************/
 
@@ -36,10 +36,11 @@
 #define MAXROWS 8
 
 Comedi2py::Comedi2py( QWidget *parent, 
-			    int nchannels,
-			    int num_of_devices,
-			    int requrested_sampling_rate,
-			    const char *fname
+		      int nchannels,
+		      int num_of_devices,
+		      int requrested_sampling_rate,
+		      int py_sampling_rate,
+		      const char *fname
 	)
     : QWidget( parent ) {
 
@@ -51,7 +52,11 @@ Comedi2py::Comedi2py( QWidget *parent,
 				    requrested_sampling_rate
 		);
 
-	tb_us = 1000000 / comediAsync->getActualSamplingRate();
+	int factual = comediAsync->getDAQSamplingRate();
+
+	int decimation = factual/py_sampling_rate;
+
+	comediAsync->setDecimation(decimation);
 
 	// fonts
 	QFont voltageFont("Courier",10);
@@ -85,7 +90,7 @@ Comedi2py::Comedi2py( QWidget *parent,
         controlLayout->addWidget(recGroupBox);
 
        // group for the time base
-        QGroupBox *tbgrp = new QGroupBox("Timebase");
+        QGroupBox *tbgrp = new QGroupBox("Sampling rate");
         QHBoxLayout *tbLayout = new QHBoxLayout;
         QFont tbFont("Courier",12);
         tbFont.setBold(TRUE);
@@ -99,6 +104,18 @@ Comedi2py::Comedi2py( QWidget *parent,
 	tbInfoTextEdit->setReadOnly(TRUE);
 	tbInfoTextEdit->setLineWidth(1);
 	tbInfoTextEdit->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+
+        QString s;
+	float cbsr = comediAsync->getCallbackSamplingRate();
+        if (cbsr<1000) {
+                s.sprintf( "%5.0f Hz", cbsr);
+        } else if (cbsr<1000000) {
+                s.sprintf( "%5.0f kHz", cbsr/1000.0);
+        } else {
+                s.sprintf( "%5.0f Mhz", cbsr/1000000.0);
+        }               
+        tbInfoTextEdit->setText(s);
+
 	tbLayout->addWidget(tbInfoTextEdit);
 
 	tbgrp->setLayout(tbLayout);
@@ -117,8 +134,6 @@ Comedi2py::Comedi2py( QWidget *parent,
 	mainLayout->addWidget(controlBox);
 	mainLayout->addWidget(scopeGroup);
 
-	changeTB();
-
 	initPython();
 
 	comediAsync->startDAQ();
@@ -127,70 +142,6 @@ Comedi2py::Comedi2py( QWidget *parent,
 Comedi2py::~Comedi2py() {
 	delete comediAsync;
 	closePython();
-}
-
-
-void Comedi2py::incTbEvent() {
-	if (tb_us<1000000) {
-		char tmp[30];
-		sprintf(tmp,"%d",tb_us);
-		int base=tmp[0]-'0';
-		switch (base) {
-		case 1:
-			tb_us=tb_us*2;
-			break;
-		case 2:
-			tb_us=tb_us/2*5;
-			break;
-		case 5:
-			tb_us=tb_us*2;
-			break;
-		default:
-			tb_us=tb_us+((int)pow(10,floor(log10(tb_us))));
-		}
-		changeTB();
-	}
-}
-
-
-void Comedi2py::decTbEvent() {
-	int minTBvalue = 1000000 / comediAsync->getActualSamplingRate();
-	if (minTBvalue < 1) minTBvalue = 1;
-	if (tb_us > minTBvalue) {
-		char tmp[30];
-		sprintf(tmp,"%d",tb_us);
-		int base=tmp[0]-'0';
-		switch (base) {
-		case 5:
-			tb_us=tb_us/5*2;
-			break;
-		case 2:
-			tb_us=tb_us/2;
-			break;
-		case 1:
-			tb_us=tb_us/5;
-			break;
-		default:
-			tb_us=tb_us-base;
-		}
-		changeTB();
-	}
-}
-
-
-void Comedi2py::changeTB() {
-	QString s;
-	if (tb_us<1000) {
-		s.sprintf( "%d usec", tb_us);
-	} else if (tb_us<1000000) {
-		tb_us = (tb_us / 1000) * 1000;
-		s.sprintf( "%d msec", tb_us/1000);
-	} else {
-		tb_us = (tb_us / 1000000) * 1000000;
-		s.sprintf( "%d sec", tb_us/1000000);
-	}		
-	tbInfoTextEdit->setText(s);
-	comediAsync->setTB(tb_us);
 }
 
 
@@ -243,7 +194,7 @@ void Comedi2py::initPython() {
 		fprintf(stderr,"function "PY_STOP_FUNCTION_NAME" not callable\n");
 	}
 
-	float r = comediAsync-> getActualSamplingRate();
+	float r = comediAsync-> getCallbackSamplingRate();
 	pValueSamplingrate = PyFloat_FromDouble(r);
 	pStartArgs = PyTuple_New(1);
 	PyTuple_SetItem(pStartArgs, 0, pValueSamplingrate);
@@ -311,11 +262,12 @@ int main( int argc, char **argv )
 	int num_of_channels = 16;
 	int num_of_devices = 1;
 	const char *filename = NULL;
-	int sampling_rate = 100;
+	int daq_sampling_rate = 1000;
+	int py_sampling_rate = 10;
 
 	QApplication a( argc, argv );		// create application object
 
-	while (-1 != (c = getopt(argc, argv, "t:r:d:p:f:c:n:h"))) {
+	while (-1 != (c = getopt(argc, argv, "r:d:c:hs:"))) {
 		switch (c) {
 		case 'c':
 			num_of_channels = strtoul(optarg,NULL,0);
@@ -324,15 +276,19 @@ int main( int argc, char **argv )
 			num_of_devices = atoi(optarg);
 			break;
 		case 'r':
-			sampling_rate = atoi(optarg);
+			daq_sampling_rate = atoi(optarg);
+			break;
+		case 's':
+			py_sampling_rate = atoi(optarg);
 			break;
 		case 'h':
 		default:
 		printf("%s usage:\n"
                        "   -c <number of channels>\n"
 		       "   -d <max number of comedi devices>\n"
-                       "   -r <sampling rate> \n"
-		       "\n",argv[0]);
+                       "   -r <sampling rate of the DAQ card> \n"
+		       "   -s <sampling rate of the python callback \n"
+		       "<python module>\n",argv[0]);
 		exit(1);
 		}
 	}
@@ -340,18 +296,26 @@ int main( int argc, char **argv )
 	if (optind < argc) {
 		filename = argv[optind];
 	} else {
-		fprintf(stderr,"We need at least a filename.\n");
+		fprintf(stderr,"We need at least the python module to run.\n");
 		exit(1);
 	}
 
+	assert(filename!=NULL);
+
+	FILE* f=fopen(filename,"rt");
+	if (f) {
+		char tmp[80];
+		fgets(tmp,80,f);
+	}
+
 	Comedi2py comedi2py(0,
-				  num_of_channels,
-				  num_of_devices,
-				  sampling_rate,
-				  filename
+			    num_of_channels,
+			    num_of_devices,
+			    daq_sampling_rate,
+			    py_sampling_rate,
+			    filename
 		);
 
 	comedi2py.show();			// show widget
 	return a.exec();			// run event loop
 }
-

@@ -2,6 +2,7 @@
  * comedi2py.h
  * (c) 2012, Bernd Porr, no warranty, GNU-public license
  * BerndPorr@f2s.com
+ * www.berndporr.me.uk
  **/
 class Comedi2py;
 #ifndef COMEDI2PY_H
@@ -23,6 +24,7 @@ class Comedi2py;
 ///////////////////////
 /// python
 
+// the 3 python functions are called by comedi2py
 #define PY_START_FUNCTION_NAME "comedistart"
 #define PY_DATA_FUNCTION_NAME "comedidata"
 #define PY_STOP_FUNCTION_NAME "comedistop"
@@ -30,93 +32,72 @@ class Comedi2py;
 class Comedi2py : public QWidget
 {
 
-    Q_OBJECT
+	Q_OBJECT
+		
 public:
 /**
  * Constructor
  **/
 	Comedi2py( QWidget *parent, 
-		      int channels,
-		      int num_of_devices,
-		      int requested_sampling_rate,
-		      const char* fname
+		   int nchannels,
+		   int num_of_devices,
+		   int requrested_sampling_rate,
+		   int py_sampling_rate,
+		   const char *fname
 		);
 	
-	/**
-	 * Destructor
-	 **/
+/**
+ * Destructor
+ **/
 	~Comedi2py();
 	
-    /**
-     * The widget which contains the graphical plots of the AD-data
-     **/
-    ComediAsync* comediAsync;
-
-    /**
-     * Text-field: elapsed time
-     **/
-    QTextEdit* timeInfoTextEdit;
-
- private:
-    /**
-     * Button which controls recording
-     **/
-    QCheckBox *recPushButton;
-
-/**
- * Text-field: time between samples
- **/
-    QTextEdit   *tbInfoTextEdit;
-
-private slots:
-/**
- * Button to increase the time-base has been pressed
- **/
-    void incTbEvent();
-
-/**
- * Button to decrease the time-base has been pressed
- **/
-    void decTbEvent();
-    
+	/**
+	 * The widget which contains the graphical plots of the AD-data
+	 **/
+	ComediAsync* comediAsync;
+	
+	/**
+	 * Text-field: elapsed time
+	 **/
+	QTextEdit* timeInfoTextEdit;
+	
 private:
-/**
- * Called if a change in the time-base has occurred
- **/
-    void changeTB();
-
-/**
- * returns the timebase
- **/
-public:
-    int getTB() {return tb_us;};
+	/**
+	 * Button which controls recording
+	 **/
+	QCheckBox *recPushButton;
+	
+        /**
+	 * Text-field: time between samples
+	 **/
+	QTextEdit   *tbInfoTextEdit;
 
 private:
-/**
- * Time between two samples in ms
- **/
-    int tb_us;
+        /**
+	 * Sampling rate seen by the python callback functions
+	 **/
+	int pySamplingRate;
 
-/**
- * filename of the python file
- **/
-    const char* filename;
+        /**
+	 * filename of the python file
+	 **/
+         const char* filename;
 
 ///////////////////////////////////////////////
 //Python stuff
 
 private:
-    PyObject *pName, *pModule, *pDict;
-    PyObject *pStartFunc,*pStopFunc,*pDataFunc;
-    PyObject *pValue;
-    PyObject **pList;
-    PyObject *pArgs,*pStartArgs;
-    PyObject *pValueSamplingrate;
+	 PyObject *pName, *pModule, *pDict;
+	 PyObject *pStartFunc,*pStopFunc,*pDataFunc;
+	 PyObject *pValue;
+	 PyObject **pList;
+	 PyObject *pArgs,*pStartArgs;
+	 PyObject *pValueSamplingrate;
 
 public:
-    void initPython();
-    void runPython(float **buffer);
-    void closePython();
+	 void initPython();
+	 void runPython(float **buffer);
+	 void closePython();
 };
 
 

@@ -1,6 +1,13 @@
 /**
  * comediasync.h
  * (c) 2012 Bernd Porr, no warranty, GNU-public license
+ * this encapsulates all the comedi async acquisition
+ * It samples at the requested sampling rate and then
+ * averages by the decimation amount. For example if
+ * the sampling rate is 1kHz and the decimation is
+ * 100 then the rate python is called is 10Hz.
+ * The callback function is "runPython(float** allChannels)"
+ * which in turn calls the python function "comedidata(allChannels)".
  **/
 class ComediAsync;
 #ifndef COMEDIASYNC_H
@@ -58,13 +65,7 @@ private:
     /**
      * elapsed msec
      **/
-    long int         nsamples;
-
-public:
-    /**
-     * sets the time between the samples
-     **/
-    void        setTB(int us);
+    long int nsamples;
 
 private:
     /**
@@ -138,12 +139,28 @@ public:
 /**
  * Gets the actual sampling rate the boards are running at.
  **/
-    int getActualSamplingRate() {return sampling_rate;};
+    int getDAQSamplingRate() {return sampling_rate;};
 
+private:
 /**
  * checks for new data and sends it to python
  **/
     void checkForData();
+
+public:
+/**
+ * sets the decimation factor (averaging over d samples)
+ **/
+    void setDecimation(int d);
+
+public:
+/**
+ * gets the sampling rate perceived by the python callback
+ **/
+    float getCallbackSamplingRate() { 
+	    return ((float)sampling_rate)/
+		    ((float)tb_init );
+    }
 
 };
 
