@@ -6,24 +6,26 @@ comedi2py \- Realtime data plotting and processing with python
 [\fIOPTION\fR]... MODULE
 .SH DESCRIPTION
 comedi2py feeds data at a specified sampling rate
-from a COMEDI data-acquisition card
+from a COMEDI data-acquisition device
 into python by using call-back functions. The goal
-is to make it as easy as possible for python users
+is to make this as easy as possible
 hiding all the complexity of COMEDI in comedi2py and 
-providing the python program just with
+providing the python program with just
 an array of the sampled data at the given sampling rate.
 .P
-There are three callback functions to the python MODULE which
+There are three callback functions for the python MODULE which
 need to be implemented:
 .br
-.B comedistart(samplingrate) 
+.B comedistart(samplingrate,minRange,maxRange) 
 is called once comedi2py
-has been started.
+has been started. The samplingrate is the rate the callback
+function comedidata() is called and minRange and maxRange
+are the minimum and maximum values of the COMEDI device(s).
 .br
 .B comedidata(card1,card2,card3,...) 
 is called periodically at the given sampling rate where every variable
 card1,...,cardn contains all samples from the corresponding
-COMEDI device.
+COMEDI device as a stanard python list.
 .br
 .B comedistop() 
 is called when comedi2py is closed.
