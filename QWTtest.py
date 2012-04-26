@@ -18,23 +18,21 @@ class SimplePlot(Qwt.QwtPlot):
         self.setAxisTitle(Qwt.QwtPlot.yLeft, 'u/Volt -->')
 
         # insert a few curves
-        cSin = Qwt.QwtPlotCurve('y = sin(x)')
+        cSin = Qwt.QwtPlotCurve('y = u/Volt')
         cSin.setPen(Qt.QPen(Qt.Qt.red))
         cSin.attach(self)
 
         # make a Numeric array for the horizontal data
         x = arange(0.0, 500, 1)
         x = x / samplingrate;
-        # some nice random data to begin with
-        y = sin(x*1000)
+        # sneaky way of creating an array of just zeroes
+        y = x * 0
 
         # initialize the data
         cSin.setData(x,y)
 
         # insert a horizontal marker at y = 0
         mY = Qwt.QwtPlotMarker()
-        mY.setLabel(Qwt.QwtText('y = 0'))
-        mY.setLabelAlignment(Qt.Qt.AlignRight | Qt.Qt.AlignTop)
         mY.setLineStyle(Qwt.QwtPlotMarker.HLine)
         mY.setYValue(0.0)
         mY.attach(self)
@@ -78,6 +76,7 @@ def comedidata(a):
     global demo
     demo.new_data(a[0]);
 
-# not used so far
+# called at the end
 def comedistop():
-    print 0
+    print "That's it!"
+

@@ -90,8 +90,9 @@ private:
 	 PyObject *pName, *pModule, *pDict;
 	 PyObject *pStartFunc,*pStopFunc,*pDataFunc;
 	 PyObject *pValue;
+	 PyObject *pValueComedidev;
 	 PyObject **pList;
-	 PyObject *pArgs,*pStartArgs;
+	 PyObject *pArgs,*pStartArgs,*pStopArgs;
 	 PyObject *pValueSamplingrate;
 
 public:

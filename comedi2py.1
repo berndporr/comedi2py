@@ -1,33 +1,54 @@
 .TH COMEDI2PY "1" "April 2012" "comedi2py 1.2.2" "User Commands"
 .SH NAME
-comedi2py \- feeding continous acquisition data into python
+comedi2py \- Realtime data plotting and processing with python
 .SH SYNOPSIS
 .B comedi2py
 [\fIOPTION\fR]... MODULE
 .SH DESCRIPTION
-A simple application which switches on the COMEDI DAQ card
-and feeds all samples at a given sampling rate into the
-python MODULE and then calls the function comedidata(a). 
-At start of the program comedistart(a) is called with the
-sampling rate. comedistop() is called when the app is closed.
+comedi2py feeds data at a specified sampling rate
+from a COMEDI data-acquisition card
+into python by using call-back functions. The goal
+is to make it as easy as possible for python users
+hiding all the complexity of COMEDI in comedi2py and 
+providing the python program just with
+an array of the sampled data at the given sampling rate.
+.P
+There are three callback functions to the python MODULE which
+need to be implemented:
+.br
+.B comedistart(samplingrate) 
+is called once comedi2py
+has been started.
+.br
+.B comedidata(card1,card2,card3,...) 
+is called periodically at the given sampling rate where every variable
+card1,...,cardn contains all samples from the corresponding
+COMEDI device.
+.br
+.B comedistop() 
+is called when comedi2py is closed.
+.SH PARAMETERS
+All parameters are stored in a configuration file which is
+MODULE specific so that different modules can have different
+settings. All settings can be overridden by the
+command line parameters and are then saved in the configuration
+file ~/.config/USB-DUX/comedi2py.ini.
 .TP
 \-c CHANNELS
 sets the number of channels
-.TP
-\-n FREQUENCY
-sets the notch filter frequency
 .TP
 \-d DEVICES
 sets the maximum number of comedi devices (default is the all
 connected COMEDI devices are used)
 .TP
-\-r SAMPLINGRATE
-sets the sampling rate
+\-r SAMPLINGRATE_DAQ
+sets the sampling rate of the DAQ card which
+.TP
+\-s SAMPLINGRATE_PYTHON
+sets the sampling rate of the python callback 
+(SAMPLINGRATE_PYTHON < SAMPLINGRATE_DAQ)
 .SH "SEE ALSO"
 More documentation can be found on
-http://www.linux-usb-daq.co.uk/software2/comedi-record/
-in particular examples describing how to import data into octave, gnuplot
-or MATLAB.
+http://www.linux-usb-daq.co.uk/software2/comedi2py/
 .SH AUTHOR
 comedi2py was written by Bernd Porr <berndporr@f2s.com>.
-

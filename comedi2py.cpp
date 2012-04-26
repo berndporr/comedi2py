@@ -17,6 +17,7 @@
 #include <QSizePolicy>
 #include <QTextEdit>
 #include <QMainWindow>
+#include <QSettings>
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -240,19 +241,22 @@ void Comedi2py::runPython(float **buffer) {
 			}
 			PyTuple_SetItem(pArgs, d, pList[d]);
 		}
-		// let's do a test call
 	pValue = PyObject_CallObject(pDataFunc, pArgs);
 	PyErr_Print();
 	}
 }
 
 void Comedi2py::closePython() {
+	pStopArgs = PyTuple_New(0);
+	PyObject_CallObject(pStopFunc, pStopArgs);
 	if (pStartFunc) Py_XDECREF(pStartFunc);
 	if (pDataFunc) Py_XDECREF(pDataFunc);
 	if (pStopFunc) Py_XDECREF(pStopFunc);
         if (pModule) Py_DECREF(pModule);
 }
 
+// options
+#define OPTIONS_GETOPT "r:d:c:hs:"
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -267,7 +271,34 @@ int main( int argc, char **argv )
 
 	QApplication a( argc, argv );		// create application object
 
-	while (-1 != (c = getopt(argc, argv, "r:d:c:hs:"))) {
+	// we are just interested in the module name
+	// skipping options and arriving at the module name
+	while (-1 != (c = getopt(argc, argv,OPTIONS_GETOPT)));
+
+	if (optind < argc) {
+		filename = argv[optind];
+	} else {
+		fprintf(stderr,"We need at least the python module to run.\n");
+		exit(1);
+	}
+	// just to be sure we really have a module name
+	assert(filename!=NULL);
+
+	QSettings settings(QSettings::IniFormat, 
+			   QSettings::UserScope,
+			   "USB-DUX",
+			   "comedi2py");
+
+	settings.beginGroup(filename);
+	num_of_channels = settings.value("num_of_channels",16).toInt();
+	num_of_devices = settings.value("num_of_devices",1).toInt();
+	daq_sampling_rate = settings.value("daq_sampling_rate",1000).toInt();
+	py_sampling_rate = settings.value("py_sampling_rate",10).toInt();
+	settings.endGroup();
+	
+	// rewinding to get the options
+	optind = 1;
+	while (-1 != (c = getopt(argc, argv,OPTIONS_GETOPT))) {
 		switch (c) {
 		case 'c':
 			num_of_channels = strtoul(optarg,NULL,0);
@@ -293,20 +324,12 @@ int main( int argc, char **argv )
 		}
 	}
 
-	if (optind < argc) {
-		filename = argv[optind];
-	} else {
-		fprintf(stderr,"We need at least the python module to run.\n");
-		exit(1);
-	}
-
-	assert(filename!=NULL);
-
-	FILE* f=fopen(filename,"rt");
-	if (f) {
-		char tmp[80];
-		fgets(tmp,80,f);
-	}
+	settings.beginGroup(filename);
+	settings.setValue("num_of_channels",num_of_channels);
+	settings.setValue("num_of_devices",num_of_devices);
+	settings.setValue("daq_sampling_rate",daq_sampling_rate);
+	settings.setValue("py_sampling_rate",py_sampling_rate);
+	settings.endGroup();
 
 	Comedi2py comedi2py(0,
 			    num_of_channels,
