@@ -1,0 +1,21 @@
+Check which python version you have in /usr/include/python*
+and modify comedi2py.pro
+
+You'll need the QT4 development libraries for compiling
+the C source.
+
+For python you need:
+PyQt4
+Qwt5
+numpy
+
+To install the program just run:
+qmake
+make
+sudo make install
+
+Test the program:
+./comedi2py QWTtest &
+
+Happy python programming.
+
