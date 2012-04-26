@@ -6,6 +6,40 @@ from PyQt4.Qwt5.anynumpy import *
 # this is taken from the QWT demos and slightly modified
 # to get this scrolling plot
 
+
+
+class DAQThermo(Qt.QWidget):
+
+    def __init__(self, *args):
+        Qt.QWidget.__init__(self, *args)
+
+        self.thermo = Qwt.QwtThermo(self)
+        self.thermo.setOrientation(Qt.Qt.Vertical,Qwt.QwtThermo.LeftScale)
+        self.thermo.setRange(0.0, 1.0)
+        self.thermo.setFillColor(Qt.Qt.green)
+
+        label = Qt.QLabel("Temperature", self)
+        label.setAlignment(Qt.Qt.AlignCenter)
+
+        layout = Qt.QVBoxLayout(self)
+        layout.setMargin(0)
+        layout.addWidget(self.thermo)
+        layout.addWidget(label)
+
+        self.setFixedWidth(3*label.sizeHint().width())
+
+    # __init__()
+
+    def setValue(self, value):
+        self.thermo.setValue(value)
+
+    # setValue()
+
+
+
+
+
+
 class SimplePlot(Qwt.QwtPlot):
 
     def __init__(self, *args):
@@ -53,12 +87,17 @@ class SimplePlot(Qwt.QwtPlot):
 # class Plot
 
 
-def make():
+def makePlot():
     demo = SimplePlot()
     demo.resize(500, 300)
     demo.show()
     return demo
 
+def makeThermo():
+    thermo = DAQThermo()
+    thermo.resize(100,400)
+    thermo.show()
+    return thermo
 
 
 #########################################################
@@ -67,14 +106,17 @@ def make():
 # called once with the samplingrate in Hz
 def comedistart(a):
     global demo
+    global thermo
     global samplingrate
     samplingrate = a
-    demo = make()
+    demo = makePlot()
+    thermo = makeThermo()
 
 # called every sample
 def comedidata(a):
     global demo
     demo.new_data(a[0]);
+    thermo.setValue(a[1]);
 
 # called at the end
 def comedistop():

@@ -53,6 +53,9 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 		dev[devNo] = comedi_open(filename);
 		if(dev[devNo]){
 			nComediDevices = devNo + 1;
+			const char *dn = comedi_get_driver_name(dev[devNo]);
+			insertPlainText ( QString().sprintf("%s on %s\n",
+							    dn,filename));
 		} else {
 			break;
 		}
@@ -149,14 +152,15 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 	for(int devNo=0;devNo<nComediDevices;devNo++) {
 		maxdata[devNo]=comedi_get_maxdata(dev[devNo],subdevice,0);
 		crange[devNo]=comedi_get_range(dev[devNo],subdevice,0,0);
-		insertPlainText ( QString().sprintf("comedi%d has a raw "
-						    "data range [0:%x] "
-						    "which maps to [%fV:%fV]\n",
-						    devNo,
-						    maxdata[devNo],
-						    crange[devNo]->min,
-						    crange[devNo]->max) );
-
+		insertPlainText ( QString().
+				  sprintf("comedi%d has a raw "
+					  "data range of [0:%x] "
+					  "which maps to [%f V:%f V]\n",
+					  devNo,
+					  maxdata[devNo],
+					  crange[devNo]->min,
+					  crange[devNo]->max) );
+		
 	}
 
         adAvgBuffer = new float*[nComediDevices];
