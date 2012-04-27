@@ -3,8 +3,9 @@ from PyQt4 import Qt
 import PyQt4.Qwt5 as Qwt
 import PyQt4.Qwt5.anynumpy as np
 
-# simple application which plots the voltage on channel 0 in a plot window
-# and channel 1 in a thermometer (LM35 connected)
+# Thermocouple application: channel 0 has the thermocouple
+# connected to and channel 1 receives the temperture of the cold junction
+# check out http://www.linux-usb-daq.co.uk/howto2/thermocouple/
 
 class DAQThermo(Qt.QWidget):
 
@@ -48,10 +49,10 @@ class ScrollingPlot(Qwt.QwtPlot):
 
         # set axis titles
         self.setAxisTitle(Qwt.QwtPlot.xBottom, 't/sec -->')
-        self.setAxisTitle(Qwt.QwtPlot.yLeft, 'U/Volt -->')
+        self.setAxisTitle(Qwt.QwtPlot.yLeft, 'temperature/C -->')
 
         # insert a few curves
-        self.cData = Qwt.QwtPlotCurve('y = voltage')
+        self.cData = Qwt.QwtPlotCurve('y = temperature')
         self.cData.setPen(Qt.QPen(Qt.Qt.red))
         self.cData.attach(self)
 
@@ -84,6 +85,15 @@ class ScrollingPlot(Qwt.QwtPlot):
 # class Plot
 
 
+# calculate the temperature
+def calcTemperature(voltageTheormocouple,temperatureLM35):
+# gain of the instrumentation amplifier INA126
+    GAIN_INSTR_AMP=((5+80/0.456))
+# zero offset of the instrumentation amplifier
+    ZERO_INSTR_AMP=(-0.05365)
+    return (((voltageTheormocouple-ZERO_INSTR_AMP)/GAIN_INSTR_AMP)/39E-6) + temperatureLM35
+
+
 def makePlot(samplingrate):
     scrollplot = ScrollingPlot()
     scrollplot.initPlotwindow(0,samplingrate)
@@ -94,7 +104,7 @@ def makePlot(samplingrate):
 def makeThermo():
     thermo = DAQThermo()
     thermo.resize(100,400)
-    thermo.setRange(0,50)
+    thermo.setRange(-20,300)
     thermo.show()
     return thermo
 
@@ -113,9 +123,10 @@ def comedistart(samplingrate,minValue,maxValue):
 def comedidata(a):
     global scrollplot
     global thermo
-    voltage = a[0]
-    temperature = a[1] / 10E-3
-    scrollplot.new_data(voltage);
+    voltage_thermo = a[0]
+    temperature_lm35 = a[1] / 10E-3
+    temperature = calcTemperature(voltage_thermo,temperature_lm35)
+    scrollplot.new_data(temperature);
     thermo.setValue(temperature);
 
 # called at the end

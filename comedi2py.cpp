@@ -329,7 +329,6 @@ int main( int argc, char **argv )
 			   "USB-DUX",
 			   "comedi2py");
 
-	fprintf(stderr,"%s: loading settings.\n",argv[0]);
 	settings.beginGroup(filename);
 	num_of_channels = settings.value("num_of_channels",16).toInt();
 	num_of_devices = settings.value("num_of_devices",1).toInt();
@@ -356,7 +355,6 @@ int main( int argc, char **argv )
 		}
 	}
 
-	fprintf(stderr,"%s: opening control window.\n",argv[0]);
 	Comedi2py comedi2py(0,
 			    num_of_channels,
 			    num_of_devices,
@@ -370,7 +368,6 @@ int main( int argc, char **argv )
 	int ret = a.exec();			// run event loop
 	
 	// last window has been closed so we can save the settings
-	fprintf(stderr,"%s: saving settings.\n",argv[0]);
 	settings.beginGroup(filename);
 	settings.setValue("num_of_channels",num_of_channels);
 	settings.setValue("num_of_devices",num_of_devices);
