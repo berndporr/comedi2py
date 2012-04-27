@@ -1,3 +1,10 @@
+comedi2py (0.5-2precise) precise; urgency=low
+
+  * Added info about the demo python scripts in the README.me file
+
+ -- Bernd Porr <berndporr@f2s.com>  Thu, 26 Apr 2012 20:11:00 +0100
+
+
 comedi2py (0.5-1precise) precise; urgency=low
 
   * Initial Release for precise pangolin

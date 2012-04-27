@@ -1,7 +1,7 @@
 import sys
 from PyQt4 import Qt
 import PyQt4.Qwt5 as Qwt
-from PyQt4.Qwt5.anynumpy import *
+import PyQt4.Qwt5.anynumpy as np
 
 # this is taken from the QWT demos and slightly modified
 # to get this scrolling plot
@@ -55,7 +55,7 @@ class SimplePlot(Qwt.QwtPlot):
         cSin.attach(self)
 
         # make a Numeric array for the horizontal data
-        x = arange(0.0, 500, 1)
+        x = np.arange(0.0, 500, 1)
         x = x / samplingrate;
         # sneaky way of creating an array of just zeroes
         y = x * 0
@@ -78,7 +78,7 @@ class SimplePlot(Qwt.QwtPlot):
         global y,x,cSin;
 # shift the dat
         ym = y[0:-1]
-        y = concatenate( ([d], ym ) )
+        y = np.concatenate( ([d], ym ) )
         cSin.setData(x,y)
         self.replot()
 
@@ -115,7 +115,7 @@ def comedistart(a,minValue,maxValue):
 def comedidata(a):
     global demo
     demo.new_data(a[0]);
-    thermo.setValue(a[1]);
+    thermo.setValue(a[0]);
 
 # called at the end
 def comedistop():

@@ -1,7 +1,7 @@
 /********************************************************************
  * comedi2py.cpp 
  * License: GNU, GPL
- * (c) 2004-2012, Bernd Porr
+ * (c) 2012, Bernd Porr
  * No Warranty
  ********************************************************************/
 
@@ -200,6 +200,7 @@ void Comedi2py::initPython() {
 	if (!PyCallable_Check(pStopFunc)) {
 		fprintf(stderr,
 			"function "PY_STOP_FUNCTION_NAME" not callable\n");
+		exit(1);
 	}
 
 	// sampling rate, min, max
@@ -273,29 +274,51 @@ void Comedi2py::closePython() {
 }
 
 // options
-#define OPTIONS_GETOPT "r:d:c:hs:"
-
-
 ///////////////////////////////////////////////////////////////////////////
 int main( int argc, char **argv )
 {
 	int c;
-	int num_of_channels = 16;
+	int num_of_channels = 8;
 	int num_of_devices = 1;
 	const char *filename = NULL;
 	int daq_sampling_rate = 1000;
 	int py_sampling_rate = 10;
+	const char options_getopt[] = "r:d:c:hs:";
+	const char usage[] = "usage:\n"					\
+		"%s"							\
+		" -c <number of channels>"				\
+		" -d <max number of comedi devices>"			\
+		" -r <sampling rate of the DAQ card>"			\
+		" -s <sampling rate of the python callback>"		\
+		" PYTHON_MODULE_NAME (without .py)\n";
 
 	QApplication a( argc, argv );		// create application object
 
-	// we are just interested in the module name
-	// skipping options and arriving at the module name
-	while (-1 != (c = getopt(argc, argv,OPTIONS_GETOPT)));
+	// we are just interested in the module name to get the settings
+	// We skip any other option for now
+	while (-1 != (c = getopt(argc, argv,options_getopt)))
+	{
+		switch (c) {
+		case 'c':
+		case 'd':
+		case 'r':
+		case 's':
+			break;
+		case 'h':
+		default:
+			printf(usage,argv[0]);
+		fprintf(stderr,"Try `man comedi2py' for more information.\n");
+		exit(1);
+		}
+	}
 
 	if (optind < argc) {
 		filename = argv[optind];
 	} else {
-		fprintf(stderr,"We need at least the python module to run.\n");
+		fprintf(stderr,
+		       "No python module specified. "
+		       "You need to specify at least your python module.\n");
+		printf(usage,argv[0]);
 		exit(1);
 	}
 	// just to be sure we really have a module name
@@ -306,6 +329,7 @@ int main( int argc, char **argv )
 			   "USB-DUX",
 			   "comedi2py");
 
+	fprintf(stderr,"%s: loading settings.\n",argv[0]);
 	settings.beginGroup(filename);
 	num_of_channels = settings.value("num_of_channels",16).toInt();
 	num_of_devices = settings.value("num_of_devices",1).toInt();
@@ -313,9 +337,9 @@ int main( int argc, char **argv )
 	py_sampling_rate = settings.value("py_sampling_rate",10).toInt();
 	settings.endGroup();
 	
-	// rewinding to get the options
+	// rewinding to get the options to override the settings
 	optind = 1;
-	while (-1 != (c = getopt(argc, argv,OPTIONS_GETOPT))) {
+	while (-1 != (c = getopt(argc, argv,options_getopt))) {
 		switch (c) {
 		case 'c':
 			num_of_channels = strtoul(optarg,NULL,0);
@@ -329,25 +353,10 @@ int main( int argc, char **argv )
 		case 's':
 			py_sampling_rate = atoi(optarg);
 			break;
-		case 'h':
-		default:
-		printf("%s usage:\n"
-                       "   -c <number of channels>\n"
-		       "   -d <max number of comedi devices>\n"
-                       "   -r <sampling rate of the DAQ card> \n"
-		       "   -s <sampling rate of the python callback \n"
-		       "<python module>\n",argv[0]);
-		exit(1);
 		}
 	}
 
-	settings.beginGroup(filename);
-	settings.setValue("num_of_channels",num_of_channels);
-	settings.setValue("num_of_devices",num_of_devices);
-	settings.setValue("daq_sampling_rate",daq_sampling_rate);
-	settings.setValue("py_sampling_rate",py_sampling_rate);
-	settings.endGroup();
-
+	fprintf(stderr,"%s: opening control window.\n",argv[0]);
 	Comedi2py comedi2py(0,
 			    num_of_channels,
 			    num_of_devices,
@@ -357,5 +366,17 @@ int main( int argc, char **argv )
 		);
 
 	comedi2py.show();			// show widget
-	return a.exec();			// run event loop
+
+	int ret = a.exec();			// run event loop
+	
+	// last window has been closed so we can save the settings
+	fprintf(stderr,"%s: saving settings.\n",argv[0]);
+	settings.beginGroup(filename);
+	settings.setValue("num_of_channels",num_of_channels);
+	settings.setValue("num_of_devices",num_of_devices);
+	settings.setValue("daq_sampling_rate",daq_sampling_rate);
+	settings.setValue("py_sampling_rate",py_sampling_rate);
+	settings.endGroup();
+
+	return ret;
 }

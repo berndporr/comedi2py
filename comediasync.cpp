@@ -26,6 +26,7 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 	)
     : QTextEdit( comedi2pyTmp ) {
 
+	// also acts as a textwindow
 	setReadOnly ( true );
 
 	channels_in_use = channels;
@@ -100,7 +101,9 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 						     channels_in_use,
 						     (int)(1e9/req_sampling_rate));
 		if(r<0){
-			printf("comedi_get_cmd_generic_timed failed\n");
+			printf("comedi_get_cmd_generic_timed failed\n"
+				"This is usually the case if the card "
+				"cannot run under these settings.");
 			exit(-1);
 		}
 		/* Modify parts of the command */
@@ -110,13 +113,6 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 		cmd[devNo]->stop_src=TRIG_NONE;
 		cmd[devNo]->stop_arg=0;
 		int ret = comedi_command_test(dev[devNo],cmd[devNo]);
-		if(ret<0){
-			comedi_perror("comedi_command_test");
-			exit(-1);
-		}
-		insertPlainText ( QString().sprintf(
-					  "1st command test successful!\n"));
-
 		ret = comedi_command_test(dev[devNo],cmd[devNo]);
 		if(ret<0){
 			comedi_perror("comedi_command_test");
@@ -127,7 +123,7 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 			exit(-1);
 		}
 		insertPlainText ( QString().sprintf(
-					  "2nd command test successful!\n"));
+					  "async command test successful!\n"));
 	}
 
 	// the timing is done channel by channel
@@ -197,6 +193,11 @@ void ComediAsync::startDAQ() {
 		int ret=comedi_command(dev[devNo],cmd[devNo]);
 		if(ret<0){
 			comedi_perror("comedi_command");
+			fprintf(stderr,
+				"This is usually the case when the "
+				"comedi device cannot run with the given "
+				"parameters such sampling rate or "
+				"number of channels.\n");
 			exit(1);
 		}
 	}
@@ -237,7 +238,7 @@ void ComediAsync::checkForData() {
 				   bytes_per_sample*channels_in_use);
 
 			if (ret==0) {
-				printf("BUG! No data in buffer.\n");
+				printf("BUG! No data in buffer!\n");
 				exit(1);
 			}
 
