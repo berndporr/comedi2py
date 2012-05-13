@@ -53,6 +53,22 @@ ComediAsync::ComediAsync( Comedi2py *comedi2pyTmp,
 		sprintf(filename,"/dev/comedi%d",devNo);
 		dev[devNo] = comedi_open(filename);
 		if(dev[devNo]){
+			// let's try to open the subdevice directly
+			// so that the python bindings can access the
+			// other subdevices
+			subdevice = comedi_find_subdevice_by_type(
+				dev[0],
+				COMEDI_SUBD_AI,0);
+			sprintf(filename,"/dev/comedi%d_subd%d",devNo,subdevice);
+			comedi_t *dev_sub = comedi_open(filename);
+			if (!dev_sub) {
+				fprintf(stderr,
+					"%s could not be opened. comedi bug?\n",
+					filename);
+			} else {
+				comedi_close(dev[devNo]);
+				dev[devNo] = dev_sub;
+			}
 			nComediDevices = devNo + 1;
 			const char *dn = comedi_get_driver_name(dev[devNo]);
 			insertPlainText ( QString().sprintf("%s on %s\n",
